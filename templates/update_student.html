@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
     <title>Update Student</title>
@@ -6,18 +6,19 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="container mt-4">
-    <h2>Update Student</h2>
+    <h1>Update Student</h1>
     <form method="post">
-        <input name="name" class="form-control mb-2" value="{{ student[1] }}" required>
-        <input name="age" type="number" class="form-control mb-2" value="{{ student[2] }}">
-        <input name="course" class="form-control mb-2" value="{{ student[3] }}">
-        <input name="roll_no" class="form-control mb-2" value="{{ student[4] }}">
-        <input name="email" type="email" class="form-control mb-2" value="{{ student[5] }}">
-        <input name="phone" class="form-control mb-2" value="{{ student[6] }}">
-        <input name="address" class="form-control mb-2" value="{{ student[7] }}">
-        <input name="year" class="form-control mb-2" value="{{ student[8] }}">
-        <textarea name="remarks" class="form-control mb-3">{{ student[9] }}</textarea>
-        <button class="btn btn-success">Update Student</button>
+        <div class="mb-2"><input type="text" name="name" class="form-control" value="{{ student[1] }}" required></div>
+        <div class="mb-2"><input type="number" name="age" class="form-control" value="{{ student[2] }}" required></div>
+        <div class="mb-2"><input type="text" name="course" class="form-control" value="{{ student[3] }}" required></div>
+        <div class="mb-2"><input type="text" name="roll_no" class="form-control" value="{{ student[4] }}"></div>
+        <div class="mb-2"><input type="email" name="email" class="form-control" value="{{ student[5] }}"></div>
+        <div class="mb-2"><input type="text" name="phone" class="form-control" value="{{ student[6] }}"></div>
+        <div class="mb-2"><input type="text" name="address" class="form-control" value="{{ student[7] }}"></div>
+        <div class="mb-2"><input type="text" name="year" class="form-control" value="{{ student[8] }}"></div>
+        <div class="mb-2"><input type="text" name="remarks" class="form-control" value="{{ student[9] }}"></div>
+        <button type="submit" class="btn btn-warning">Update</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
     </form>
 </body>
 </html>

@@ -1,29 +1,42 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
     <title>Student Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    {% if session['role'] == 'owner' %}
+    <a href="{{ url_for('manage_users') }}" class="btn btn-info mb-3 ms-2">Manage Users</a>
+{% endif %}
+
 </head>
 <body class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Student Management</h1>
         <div>
-            <a href="{{ url_for('export') }}" class="btn btn-success me-2">Export CSV</a>
-            <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+            <span class="me-3">Logged in as <b>{{ session['username'] }}</b> ({{ session['role'] }})</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Logout</a>
         </div>
     </div>
 
     <form method="get" action="/" class="mb-3">
-        <input type="text" name="q" class="form-control" placeholder="Search by name or course" value="{{ request.args.get('q', '') }}">
+        <input type="text" name="q" class="form-control" placeholder="Search by name or course">
     </form>
 
-    <a href="{{ url_for('add_student') }}" class="btn btn-primary mb-3">Add Student</a>
+    <div class="mb-3">
+        {% if session['role'] in ['owner', 'staff1'] %}
+            <a href="{{ url_for('add_student') }}" class="btn btn-primary">Add Student</a>
+        {% endif %}
+        {% if session['role'] == 'owner' %}
+            <a href="{{ url_for('export') }}" class="btn btn-success">Export CSV</a>
+        {% endif %}
+    </div>
 
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered">
         <tr>
             <th>ID</th><th>Name</th><th>Age</th><th>Course</th>
-            <th>Roll</th><th>Email</th><th>Phone</th><th>Address</th><th>Year</th><th>Remarks</th><th>Action</th>
+            <th>Roll No</th><th>Email</th><th>Phone</th><th>Address</th><th>Year</th><th>Remarks</th>
+            <th>Action</th>
         </tr>
         {% for student in students %}
         <tr>
@@ -38,14 +51,15 @@
             <td>{{ student[8] }}</td>
             <td>{{ student[9] }}</td>
             <td>
-                <a href="{{ url_for('update_student', id=student[0]) }}" class="btn btn-warning btn-sm mb-1">Edit</a>
-                <a href="{{ url_for('delete_student', id=student[0]) }}" class="btn btn-danger btn-sm">Delete</a>
+                {% if session['role'] in ['owner', 'staff3'] %}
+                    <a href="{{ url_for('update_student', id=student[0]) }}" class="btn btn-warning btn-sm">Edit</a>
+                {% endif %}
+                {% if session['role'] in ['owner', 'staff2'] %}
+                    <a href="{{ url_for('delete_student', id=student[0]) }}" class="btn btn-danger btn-sm">Delete</a>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
     </table>
 </body>
 </html>
-
-
-
