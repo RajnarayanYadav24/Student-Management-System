@@ -30,10 +30,18 @@ def init_db():
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM users")
     if cur.fetchone()[0] == 0:
-     cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-                ('Admin', 'Admin123', 'owner'))
-    conn.commit()
-    print("✅ Seeded initial owner: username='Admin', password='Admin123'")
+     # Get credentials from environment
+        username = os.getenv("DEFAULT_ADMIN_USERNAME")
+        password = os.getenv("DEFAULT_ADMIN_PASSWORD")
+        role = os.getenv("DEFAULT_ADMIN_ROLE")
+
+        # Insert initial owner
+        cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                    (username, password, role))
+        conn.commit()
+        print(f"✅ Seeded initial owner: username='{username}', password='{password}'")
+    else:
+     print("ℹ️ Owner already exists. No seeding needed.")
 
     conn.close()
 
