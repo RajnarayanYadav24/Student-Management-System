@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response
 import sqlite3, csv
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  
 
 app = Flask(__name__)
-app.secret_key = 'secret123'  # Needed for sessions
-
+app.secret_key = os.getenv('SECRET_KEY')  
 
 # Initialize DB
 def init_db():
@@ -218,5 +221,5 @@ if __name__ == '__main__':
     # if os.path.exists("students.db"):
     #     os.remove("students.db")
     init_db()
-    app.run(debug=True)
+    app.run(debug=False)
 
