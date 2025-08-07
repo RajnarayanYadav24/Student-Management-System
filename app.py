@@ -251,5 +251,5 @@ if __name__ == '__main__':
     # if os.path.exists("students.db"):
     #     os.remove("students.db")
     init_db()
-    app.run(debug=False)
+    app.run(debug=True)
 
