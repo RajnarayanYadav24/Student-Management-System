@@ -1,12 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response
 import sqlite3, csv
 from dotenv import load_dotenv
+import bcrypt
 import os
 
 load_dotenv()  
 
+
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  
+
+DEFAULT_ADMIN_USERNAME = os.getenv("DEFAULT_ADMIN_USERNAME")
+DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD")
+DEFAULT_ADMIN_ROLE = os.getenv("DEFAULT_ADMIN_ROLE")
+
 
 # Initialize DB
 def init_db():
@@ -30,16 +37,12 @@ def init_db():
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM users")
     if cur.fetchone()[0] == 0:
-     # Get credentials from environment
-        username = os.getenv("DEFAULT_ADMIN_USERNAME")
-        password = os.getenv("DEFAULT_ADMIN_PASSWORD")
-        role = os.getenv("DEFAULT_ADMIN_ROLE")
-
-        # Insert initial owner
+        hashed_password = bcrypt.hashpw(DEFAULT_ADMIN_PASSWORD.encode('utf-8'), bcrypt.gensalt())
         cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-                    (username, password, role))
+                    (DEFAULT_ADMIN_USERNAME, hashed_password.decode('utf-8'), DEFAULT_ADMIN_ROLE))
         conn.commit()
-        print(f"✅ Seeded initial owner: username='{username}', password='{password}'")
+        print(f"✅ Seeded initial owner: username='{DEFAULT_ADMIN_USERNAME}', password='{DEFAULT_ADMIN_PASSWORD}'")
+
     else:
      print("ℹ️ Owner already exists. No seeding needed.")
 
@@ -57,33 +60,45 @@ def check_role(allowed_roles):
 
 
 # Login
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
+    if request.method == "POST":
         username = request.form['username']
         password = request.form['password']
-        conn = sqlite3.connect('students.db')
+
+        # Connect to DB
+        conn = sqlite3.connect("students.db")
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-        user = cur.fetchone()
+        cur.execute("SELECT password, role FROM users WHERE username = ?", (username,))
+        row = cur.fetchone()
         conn.close()
-        if user:
-            session['username'] = username
-            session['role'] = user[3]  # id, username, password, role
-            return redirect(url_for('index'))
+
+        if row:
+            hashed_password_from_db, role = row
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db.encode('utf-8')):
+                session['username'] = username
+                session['role'] = role
+                flash("Login successful!", "success")
+                return redirect(url_for("index"))  
+            else:
+                flash("Invalid password", "danger")
         else:
-            flash('Invalid credentials', 'danger')
-    return render_template('login.html')
+            flash("User not found", "danger")
+
+    return render_template("login.html")
+
+
 
 # Logout
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
-    session.pop('role', None)
+    session.clear()
+    flash("Logged out successfully", "info")
     return redirect(url_for('login'))
 
+
 # Index
-@app.route('/')
+@app.route('/index')
 def index():
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -196,7 +211,7 @@ def delete_user(id):
     return redirect(url_for('manage_users'))
 
 
-
+# Manage
 @app.route('/manage_users', methods=['GET', 'POST'])
 def manage_users():
     if 'username' not in session or session['role'] != 'owner':
@@ -211,9 +226,11 @@ def manage_users():
         password = request.form['password']
         role = request.form['role']
         try:
-            cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
-            conn.commit()
-            flash('User added successfully!', 'success')
+           hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+           cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, hashed_pw, role))
+
+           conn.commit()
+           flash('User added successfully!', 'success')
         except sqlite3.IntegrityError:
             flash('Username already exists.', 'danger')
 
@@ -223,6 +240,11 @@ def manage_users():
     return render_template('manage_users.html', users=users)
 
 
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    return f"<pre>{traceback.format_exc()}</pre>", 500
 
 if __name__ == '__main__':
     import os
